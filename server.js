@@ -1,17 +1,19 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const morgan = require("morgan");
+mongoose.Promise = global.Promise;
 
 const app = express();
 app.use(express.json());
 app.use(morgan("common"));
 
-const postsRouter = require("./postsRouter");
-mongoose.Promise = global.Promise;
-
 const {DATABASE_URL, PORT} = require('./config');
-const {BlogPost} = require("./models");
+const {Author, BlogPost} = require("./models");
 
+const authorsRouter = require("./authorsRouter");
+const postsRouter = require("./postsRouter");
+
+app.use("/authors", authorsRouter);
 app.use("/posts", postsRouter);
 
 app.use("*", function (req, res) {

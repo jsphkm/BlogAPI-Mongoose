@@ -1,14 +1,20 @@
 const express = require("express");
 const router = express.Router();
 
-const {BlogPost} = require("./models");
-
+const {Author, BlogPost} = require("./models");
 
 router.get("/", (req, res) => {
   BlogPost
     .find()
     .then(posts => {
-      res.json(posts.map(post => post.serialize()));
+      res.json(posts.map(post => {
+        return {
+          id: post._id,
+          title: post.title,
+          content: post.content,
+          author: post.authorName
+        }
+      }));
     })
     .catch(err => {
       console.error(err);
@@ -19,7 +25,15 @@ router.get("/", (req, res) => {
 router.get("/:id", (req, res) => {
   BlogPost
     .findById(req.params.id)
-    .then(post => res.json(post.serialize()))
+    .then(post => {
+      res.json({
+        id: post._id,
+        title: post.title,
+        content: post.content,
+        author: post.authorName,
+        comments: post.comments
+      });
+    })
     .catch(err => {
       console.error(err);
       res.status(500).json({error: "something went wrong"});
@@ -27,13 +41,14 @@ router.get("/:id", (req, res) => {
 })
 
 router.post("/", (req, res) => {
-  const requiredFields = ["title", "content", "author"];
-  for (let i=0; i < requiredFields.length; i++) {
-    const field = requiredFields[i];
+  const requiredFields = ["title", "content", "author_id"];
+  requiredFields.forEach(field => {
     if (!(field in req.body)) {
       const message = `Missing ${field} in request body`;
+      console.error(message);
+      return res.status(400).send(message);
     }
-  }
+  });
 
   BlogPost
     .create({
@@ -41,7 +56,13 @@ router.post("/", (req, res) => {
       content: req.body.content,
       author: req.body.author
     })
-    .then(blogPost => res.status(201).json(blogPost.serialize()))
+    .then(post => res.status(201).json({
+      id: post._id,
+      title: post.title,
+      content: post.content,
+      author: post.authorName,
+      comments: post.comments
+    }))
     .catch(err => {
       console.error(err);
       res.status(500).json({error: "Something went wrong"});
@@ -63,10 +84,25 @@ router.put("/:id", (req, res) => {
     }
   });
 
+  // BlogPost
+  //   .findByIdAndUpdate(req.params.id, {$set: updated}, {new: true})
+  //   .then(updatedPost => res.status(204).end())
+  //   .catch(err => res.status(500).json({message: "Something went wrong"}));
   BlogPost
-    .findByIdAndUpdate(req.params.id, {$set: updated}, {new: true})
+    .update(
+      {title: req.body.title},
+      {author: req.body.author},
+      {
+        $push: {
+          comments: {
+            "content": req.body.content
+          }
+        }
+      }
+    )
     .then(updatedPost => res.status(204).end())
     .catch(err => res.status(500).json({message: "Something went wrong"}));
+
 });
 
 router.delete("/:id", (req, res) => {
