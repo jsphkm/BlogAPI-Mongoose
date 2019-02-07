@@ -10,13 +10,13 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.16.3",
-    "mongoose": "^5.2.4",
+    "mongoose": "^5.4.10",
     "nodemon": "^1.18.3"
   },
   "devDependencies": {
     "chai": "^4.1.2",
     "chai-http": "^4.0.0",
     "mocha": "^5.2.0",
-    "morgan": "^1.9.0"
+    "morgan": "^1.9.1"
   }
 }
